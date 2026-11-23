@@ -63,23 +63,32 @@ You need a paid **Apple Developer Program** membership ($99/year). Wallet won't 
    npm start
    ```
 
-## Deploy to Render
+## Deploy to Vercel
 
-The repo includes a `render.yaml` blueprint (free plan, Node 22).
+The repo is set up for Vercel: the site in `public/` is served as static files and `api/index.js` runs the pass signer as a serverless function. Every push to `main` redeploys.
 
-1. In Render choose **New → Blueprint** and pick this repo, or use the button below.
-2. When asked, fill in `PASS_TYPE_ID` and `TEAM_ID`.
-3. In the service's **Environment → Secret Files**, add `wwdr.pem`, `signerCert.pem` and `signerKey.pem`. Render mounts them in `/etc/secrets`, which is where `CERT_DIR` points.
-4. Redeploy. Render serves the site over HTTPS, so the camera scanner works on iPhone.
+1. On vercel.com choose **Add New → Project** and import this repo, or use the button below. No build settings need changing (`vercel.json` has them).
+2. In **Settings → Environment Variables**, add:
+   | Name | Value |
+   |---|---|
+   | `PASS_TYPE_ID` | e.g. `pass.com.yourname.giftcards` |
+   | `TEAM_ID` | your 10-character Apple Team ID |
+   | `WWDR_PEM` | contents of `wwdr.pem` |
+   | `SIGNER_CERT_PEM` | contents of `signerCert.pem` |
+   | `SIGNER_KEY_PEM` | contents of `signerKey.pem` (mark it **Sensitive**) |
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/awnsh/giftpass)
+   You can paste each PEM file's text as-is, or base64 it first:
+   ```powershell
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("certs\signerKey.pem"))
+   ```
+3. Redeploy (Deployments → ⋯ → Redeploy). Vercel serves over HTTPS, so the camera scanner works on iPhone.
 
-Free Render services go to sleep when idle, so the first visit after a while can take up to a minute to load.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/awnsh/giftpass)
 
 ## Testing on an iPhone
 
 The camera only works over **HTTPS**. Plain `http://<your-pc-ip>:3000` will load, but the camera will be blocked. **Use a photo** still works there. Options:
-- Deploy it to any Node host with HTTPS (Render, Railway, Fly.io, a VPS behind Caddy).
+- Deploy it to Vercel (above), or any Node host with HTTPS.
 - Or tunnel your local server, e.g. `cloudflared tunnel --url http://localhost:3000`, and open the https URL on your phone.
 
 `npm test` builds and signs a pass with throwaway self-signed certificates and checks the bundle and signature. That pass won't install on a phone, but the test confirms the pipeline works.
@@ -88,11 +97,12 @@ The camera only works over **HTTPS**. Plain `http://<your-pc-ip>:3000` will load
 
 - Card numbers and PINs are only in server memory while the pass is being built. Nothing is saved or logged.
 - Passes are marked `sharingProhibited` so they can't be AirDropped from Wallet.
-- Anyone who sees the pass can use the card, just like the physical card. Keep `certs/` and `.env` out of source control (already in `.gitignore`).
+- Anyone who sees the pass can use the card, just like the physical card. Keep `certs/` and `.env` out of source control (already in `.gitignore`). On Vercel, keep the certificates in environment variables, never in the repo.
 
 ## Files
 
-- `server.js` – Express server: static site + `POST /api/pass` → `.pkpass`
+- `server.js` – Express server: static site + `POST /api/pass` → `.pkpass` (run locally with `npm start`)
+- `api/index.js` + `vercel.json` – Vercel serverless entry and config
 - `lib/pass.js` – builds the pass JSON (store card layout, barcode choice, back-of-pass details) and signs it with `passkit-generator`
 - `lib/png.js` – draws the pass icon/logo in the card's colour
 - `brand/` – GiftPass logo (SVG + 512px PNG)

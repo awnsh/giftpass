@@ -73,3 +73,20 @@ ssl("cms", "-verify", "-binary", "-inform", "DER", "-in", "signature", "-content
 
 console.log("All pass tests passed (" + buffer.length + " byte .pkpass, signature verified).");
 fs.rmSync(dir, { recursive: true, force: true });
+
+// 6. Certificates supplied as environment variables (how Vercel is configured)
+{
+  const read = (n) => fs.readFileSync(path.join(dir2, n), "utf8");
+  const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "gcw-env-"));
+  const ssl2 = (...a) => execFileSync("openssl", a, { cwd: dir2, stdio: "pipe" });
+  ssl2("req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", "k.pem", "-out", "wwdr.pem", "-days", "2", "-subj", "/CN=Env WWDR");
+  process.env.CERT_DIR = path.join(dir2, "nope");
+  process.env.WWDR_PEM = read("wwdr.pem");                                   // raw PEM
+  process.env.SIGNER_CERT_PEM = read("wwdr.pem").replace(/\n/g, "\n");      // escaped newlines
+  process.env.SIGNER_KEY_PEM = Buffer.from(read("k.pem")).toString("base64"); // base64
+  const { configStatus } = require("../lib/pass");
+  assert.equal(configStatus().ready, true);
+  assert.equal(createPkpass({ merchant: "Env", cardNumber: "1234567890" }).buffer.subarray(0, 2).toString(), "PK");
+  console.log("Env-var certificates work.");
+  fs.rmSync(dir2, { recursive: true, force: true });
+}

@@ -31,9 +31,13 @@ app.post("/api/pass", (req, res) => {
   }
 });
 
+module.exports = app; // used by api/index.js on Vercel
+
+if (require.main === module) {
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
   const s = configStatus();
   console.log(`GiftPass running on http://localhost:${port}`);
   if (!s.ready) console.log("Signing not configured. Missing: " + s.missing.join(", ") + " (see README.md)");
 });
+}

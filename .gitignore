@@ -3,3 +3,5 @@ node_modules/
 certs/
 .claude/
 *.pkpass
+public/vendor/
+.vercel
