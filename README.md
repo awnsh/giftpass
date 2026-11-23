@@ -63,6 +63,19 @@ You need a paid **Apple Developer Program** membership ($99/year). Wallet won't 
    npm start
    ```
 
+## Deploy to Render
+
+The repo includes a `render.yaml` blueprint (free plan, Node 22).
+
+1. In Render choose **New → Blueprint** and pick this repo, or use the button below.
+2. When asked, fill in `PASS_TYPE_ID` and `TEAM_ID`.
+3. In the service's **Environment → Secret Files**, add `wwdr.pem`, `signerCert.pem` and `signerKey.pem`. Render mounts them in `/etc/secrets`, which is where `CERT_DIR` points.
+4. Redeploy. Render serves the site over HTTPS, so the camera scanner works on iPhone.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/awnsh/giftpass)
+
+Free Render services go to sleep when idle, so the first visit after a while can take up to a minute to load.
+
 ## Testing on an iPhone
 
 The camera only works over **HTTPS**. Plain `http://<your-pc-ip>:3000` will load, but the camera will be blocked. **Use a photo** still works there. Options:
