@@ -26,7 +26,7 @@
     try { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(n); }
     catch { return n.toFixed(2); }
   };
-  const last4 = (num) => { const d = (num || "").replace(/\s/g, ""); return d.length > 4 ? "•••• " + d.slice(-4) : d || "—"; };
+  const last4 = (num) => { const d = (num || "").replace(/\s/g, ""); return d.length > 4 ? "•••• " + d.slice(-4) : d || ""; };
   function textColor(hex) {
     const n = parseInt((hex || "#3b4bdb").slice(1), 16);
     const l = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
@@ -34,6 +34,15 @@
   }
   const normUrl = (u) => { u = (u || "").trim(); return !u ? "" : /^https?:\/\//i.test(u) ? u : "https://" + u; };
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
+  }
 
   // ================= Barcode drawing (original symbology) =================
   const BCID = {
@@ -47,7 +56,8 @@
   function drawBarcode(el, card) {
     const text = (card.barcodeValue || (card.cardNumber || "").replace(/\s/g, "")).trim();
     el.innerHTML = "";
-    if (!text) { el.innerHTML = '<span class="no-barcode">No barcode. Show the card number below.</span>'; return null; }
+    delete el.dataset.kind;
+    if (!text) { el.innerHTML = '<span class="no-barcode">No barcode. Show the card number.</span>'; return null; }
     if (!window.bwipjs) { el.textContent = "Loading barcode…"; return null; }
     const tries = [BCID[card.barcodeFormat] || "code128", "code128"];
     for (const bcid of tries) {
@@ -62,47 +72,61 @@
         return bcid;
       } catch { /* try next */ }
     }
-    el.innerHTML = '<span class="no-barcode">This barcode can\'t be drawn. Show the card number below.</span>';
+    el.innerHTML = '<span class="no-barcode">This barcode can\'t be drawn. Show the card number.</span>';
     return null;
   }
 
-  // ================= Routing =================
+  // ================= Routing + app chrome =================
   const views = { home: $("viewHome"), edit: $("viewEdit"), card: $("viewCard") };
   let editingId = null;
-  function show(name) {
+
+  function chrome(name, title) {
     for (const [k, v] of Object.entries(views)) v.hidden = k !== name;
-    $("navAdd").hidden = name === "edit";
+    const home = name === "home";
+    $("brand").hidden = !home;
+    $("backBtn").hidden = home;
+    $("barTitle").hidden = home;
+    $("barTitle").textContent = title || "";
+    $("bbAdd").hidden = name !== "home";
+    $("bbSave").hidden = name !== "edit";
+    $("bbShow").hidden = name !== "card";
+    document.body.dataset.view = name;
     window.scrollTo(0, 0);
   }
   function route() {
     stopCamera();
-    const [, page, id] = location.hash.split("/");
-    if (page === "add") { openEditor(null); show("edit"); }
-    else if (page === "edit" && getCard(id)) { openEditor(getCard(id)); show("edit"); }
-    else if (page === "card" && getCard(id)) { renderDetail(getCard(id)); show("card"); }
-    else { renderHome(); show("home"); }
+    closeFullscreen();
+    const [, page, rawId] = location.hash.split("/");
+    const id = rawId ? decodeURIComponent(rawId) : "";
+    if (page === "add") { openEditor(null); chrome("edit", "Add a card"); }
+    else if (page === "edit" && getCard(id)) { openEditor(getCard(id)); chrome("edit", "Edit card"); }
+    else if (page === "card" && getCard(id)) { renderDetail(getCard(id)); chrome("card", getCard(id).merchant); }
+    else { renderHome(); chrome("home"); document.title = "GiftPass · Your gift cards, on your phone"; }
   }
   window.addEventListener("hashchange", route);
+  // Back always goes to the parent screen (card → list, edit → card), replacing the
+  // current history entry so the phone's own back gesture doesn't loop through old screens.
+  $("backBtn").addEventListener("click", () => {
+    const [, page, id] = location.hash.split("/");
+    location.replace(page === "edit" && id ? `#/card/${id}` : "#/");
+  });
 
   // ================= Home =================
   function renderHome() {
     const cards = loadCards().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-    const grid = $("cardGrid");
-    grid.innerHTML = cards.map((c) => `
+    $("cardStack").innerHTML = cards.map((c) => `
       <a class="mini" href="#/card/${encodeURIComponent(c.id)}" style="background:${esc(c.color)};color:${textColor(c.color)}">
         <span class="pass-shine" aria-hidden="true"></span>
-        <span class="mini-top"><span class="pass-logo"></span>${esc(c.merchant)}</span>
-        <span class="mini-bal">${esc(money(c.balance, c.currency) || "Gift card")}</span>
+        <span class="mini-top"><span class="pass-logo"></span><span class="mini-name">${esc(c.merchant)}</span><span class="mini-bal">${esc(money(c.balance, c.currency))}</span></span>
         <span class="mini-num">${esc(last4(c.cardNumber))}</span>
       </a>`).join("");
     $("emptyState").hidden = cards.length > 0;
-    views.home.classList.toggle("has-cards", cards.length > 0); // hide the intro once there are cards
-    grid.hidden = cards.length === 0;
-    // Total per currency
+    $("cardStack").hidden = cards.length === 0;
+    views.home.classList.toggle("has-cards", cards.length > 0);
     const totals = {};
     for (const c of cards) if (c.balance !== "" && !isNaN(Number(c.balance))) totals[c.currency] = (totals[c.currency] || 0) + Number(c.balance);
     const parts = Object.entries(totals).map(([cur, v]) => money(v, cur));
-    $("totalBalance").textContent = parts.length ? "Total " + parts.join(" + ") : "";
+    $("totalBalance").textContent = parts.length ? parts.join(" + ") : "";
   }
 
   // Install tip: iPhone/iPad Safari, not already installed, not dismissed.
@@ -154,6 +178,20 @@
   });
 
   // ================= Add / edit =================
+  const SWATCHES = ["#3b4bdb", "#0e0e11", "#c8102e", "#e8590c", "#f2c94c", "#2f9e44", "#006241", "#0c8599", "#7048e8", "#d6336c", "#f2e9d8", "#868e96"];
+  $("swatches").innerHTML = SWATCHES.map((c) =>
+    `<button type="button" class="swatch" role="radio" aria-checked="false" aria-label="Colour ${c}" data-color="${c}" style="background:${c}"></button>`).join("");
+  function selectSwatch(color) {
+    f.color.value = color;
+    document.querySelectorAll(".swatch").forEach((s) => s.setAttribute("aria-checked", String(s.dataset.color.toLowerCase() === color.toLowerCase())));
+  }
+  $("swatches").addEventListener("click", (e) => {
+    const s = e.target.closest(".swatch");
+    if (!s) return;
+    selectSwatch(s.dataset.color);
+    updatePreview();
+  });
+
   function sanitize(src) {
     const s = (v, max) => String(v ?? "").trim().slice(0, max);
     return {
@@ -178,10 +216,11 @@
     editingId = card ? card.id : null;
     form.reset();
     $("formError").hidden = true;
-    $("editTitle").textContent = card ? `Edit ${card.merchant}` : "Add a gift card";
-    $("saveBtn").textContent = card ? "Save changes" : "Save card";
-    $("scanResult").textContent = "No barcode? Skip this step and type the card number below.";
-    if (card) for (const k of Object.keys(card)) if (f[k]) f[k].value = card[k];
+    $("bbSave").textContent = card ? "Save changes" : "Save card";
+    $("scanResult").textContent = "No barcode? Just type the card number below.";
+    if (card) for (const k of Object.keys(card)) if (f[k] && k !== "color") f[k].value = card[k];
+    selectSwatch(card ? card.color : SWATCHES[0]);
+    form.querySelector(".more").open = false;
     updatePreview();
   }
 
@@ -194,7 +233,7 @@
     const bal = money(f.balance.value, f.currency.value);
     $("pvPrimaryLabel").textContent = bal ? "BALANCE" : "GIFT CARD";
     $("pvPrimary").textContent = bal || merchant;
-    $("pvNumber").textContent = last4(f.cardNumber.value);
+    $("pvNumber").textContent = last4(f.cardNumber.value) || "—";
     $("pvPinWrap").hidden = !f.pin.value;
     drawBarcode($("pvBarcode"), { barcodeValue: f.barcodeValue.value, barcodeFormat: f.barcodeFormat.value, cardNumber: f.cardNumber.value });
     $("pvAlt").textContent = f.cardNumber.value || f.barcodeValue.value;
@@ -206,10 +245,15 @@
     e.preventDefault();
     const err = $("formError");
     const problem =
-      !f.merchant.value.trim() ? "Enter the store or brand name." :
-      !f.cardNumber.value.trim() && !f.barcodeValue.value.trim() ? "Scan the barcode or type the card number." :
-      f.balance.value && !/^\d+(\.\d{1,2})?$/.test(f.balance.value.trim()) ? "Balance must be a number like 25 or 25.00." : "";
-    if (problem) { err.textContent = problem; err.hidden = false; return; }
+      !f.merchant.value.trim() ? ["Enter the store or brand name.", f.merchant] :
+      !f.cardNumber.value.trim() && !f.barcodeValue.value.trim() ? ["Scan the barcode or type the card number.", f.cardNumber] :
+      f.balance.value && !/^\d+(\.\d{1,2})?$/.test(f.balance.value.trim()) ? ["Balance must be a number like 25 or 25.00.", f.balance] : null;
+    if (problem) {
+      err.textContent = problem[0]; err.hidden = false;
+      toast(problem[0]);
+      problem[1].focus();
+      return;
+    }
     const data = Object.fromEntries(new FormData(form));
     const cards = loadCards();
     const existing = cards.find((c) => c.id === editingId);
@@ -217,7 +261,10 @@
     card.id = editingId || newId();
     const next = existing ? cards.map((c) => (c.id === card.id ? card : c)) : [...cards, card];
     if (!saveCards(next)) { err.textContent = "Couldn't save. Private Browsing may be on, or storage is full."; err.hidden = false; return; }
-    location.hash = `#/card/${encodeURIComponent(card.id)}`;
+    toast(existing ? "Changes saved" : "Card saved");
+    // Replace the add/edit screen so Back from the card goes home, not to the form.
+    history.replaceState(null, "", `#/card/${encodeURIComponent(card.id)}`);
+    route();
   });
 
   // ================= Scanner =================
@@ -236,7 +283,7 @@
     scanning = false;
     $("scanBtn").textContent = "Start camera";
     $("scanHint").hidden = false;
-    $("scanHint").textContent = "Camera is off";
+    document.querySelector(".scanner").classList.remove("live");
   }
   function onScan(result) {
     const text = result.getText();
@@ -245,20 +292,20 @@
     f.barcodeFormat.value = BCID[format] ? format : "";
     const digits = text.replace(/\s/g, "");
     if (!f.cardNumber.value && /^\d{8,24}$/.test(digits)) f.cardNumber.value = digits;
-    $("scanResult").textContent = `Scanned a ${format.replace(/_/g, " ")} barcode. Check the details below.`;
+    $("scanResult").textContent = `Scanned a ${format.replace(/_/g, " ")} barcode. Now add the store name.`;
+    toast("Barcode scanned");
     if (navigator.vibrate) navigator.vibrate(80);
     updatePreview();
-    form.scrollIntoView({ behavior: "smooth" });
-    f.merchant.focus({ preventScroll: true });
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => f.merchant.focus({ preventScroll: true }), 350);
   }
   $("scanBtn").addEventListener("click", async () => {
     if (scanning) return stopCamera();
     const r = getReader();
     if (!r) { $("scanResult").textContent = "The scanner is still loading. Try again in a second."; return; }
-    if (!window.isSecureContext || !navigator.mediaDevices) { $("scanResult").textContent = "The camera isn't available here. Use “Use a photo” instead."; return; }
+    if (!window.isSecureContext || !navigator.mediaDevices) { $("scanResult").textContent = "The camera isn't available here. Tap “Photo” instead."; return; }
     scanning = true;
     $("scanBtn").textContent = "Stop camera";
-    $("scanHint").textContent = "Point at the barcode";
     try {
       await r.decodeFromConstraints(
         { video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } },
@@ -266,9 +313,10 @@
         (result) => { if (result && scanning) { stopCamera(); onScan(result); } }
       );
       $("scanHint").hidden = true;
+      document.querySelector(".scanner").classList.add("live");
     } catch (err) {
       stopCamera();
-      $("scanResult").textContent = "Couldn't open the camera (" + (err.message || err.name) + "). Try “Use a photo”.";
+      $("scanResult").textContent = "Couldn't open the camera (" + (err.message || err.name) + "). Tap “Photo” instead.";
     }
   });
   $("photo").addEventListener("change", async (e) => {
@@ -279,7 +327,7 @@
     const url = URL.createObjectURL(file);
     $("scanResult").textContent = "Reading photo…";
     try { onScan(await r.decodeFromImageUrl(url)); }
-    catch { $("scanResult").textContent = "No barcode found in that photo. Try a closer, well-lit, flat shot, or type the number below."; }
+    catch { $("scanResult").textContent = "No barcode found in that photo. Try a closer, well-lit, flat shot, or type the number."; }
     finally { URL.revokeObjectURL(url); }
   });
 
@@ -298,7 +346,9 @@
     $("dPrimary").textContent = bal || card.merchant;
     $("dExpWrap").hidden = !card.expires;
     $("dExpires").textContent = card.expires ? new Date(card.expires + "T12:00:00").toLocaleDateString(undefined, { dateStyle: "medium" }) : "";
-    drawBarcode($("dBarcode"), card);
+    const drawn = drawBarcode($("dBarcode"), card);
+    $("dBarcodeBtn").disabled = !drawn;
+    $("bbShow").hidden = !drawn;
     $("dAlt").textContent = card.cardNumber || card.barcodeValue;
     $("numRow").hidden = !card.cardNumber;
     $("dNumber").textContent = card.cardNumber;
@@ -307,11 +357,11 @@
     $("revealPin").textContent = "Show";
     $("dRedeem").hidden = !card.redeemUrl; $("dRedeem").href = card.redeemUrl || "#";
     $("dBalanceLink").hidden = !card.balanceUrl; $("dBalanceLink").href = card.balanceUrl || "#";
-    $("linkRow").hidden = !card.redeemUrl && !card.balanceUrl;
     $("dNotes").hidden = !card.notes; $("dNotes").textContent = card.notes;
     $("balanceForm").elements.balance.value = card.balance;
     $("dEdit").href = `#/edit/${encodeURIComponent(card.id)}`;
-    $("copyMsg").textContent = "";
+    $("deleteLabel").textContent = "Delete card";
+    $("deleteBtn").dataset.armed = "";
     document.title = `${card.merchant} · GiftPass`;
   }
   $("revealPin").addEventListener("click", () => {
@@ -326,41 +376,72 @@
     const value = which === "pin" ? c.pin : c.cardNumber.replace(/\s/g, "");
     try {
       await navigator.clipboard.writeText(value);
-      $("copyMsg").textContent = which === "pin" ? "PIN copied." : "Card number copied.";
+      toast(which === "pin" ? "PIN copied" : "Card number copied");
     } catch {
-      $("copyMsg").textContent = "Couldn't copy automatically. Press and hold the text to copy it.";
+      toast("Press and hold the text to copy it");
     }
   }));
   $("balanceForm").addEventListener("submit", (e) => {
     e.preventDefault();
-    const v = e.target.elements.balance.value.trim();
-    if (v && !/^\d+(\.\d{1,2})?$/.test(v)) { $("copyMsg").textContent = "Balance must be a number like 12.50."; return; }
-    const cards = loadCards().map((c) => (c.id === currentId ? { ...c, balance: v, updatedAt: Date.now() } : c));
-    saveCards(cards);
+    const input = e.target.elements.balance;
+    const v = input.value.trim();
+    if (v && !/^\d+(\.\d{1,2})?$/.test(v)) { toast("Balance must be a number like 12.50"); return; }
+    saveCards(loadCards().map((c) => (c.id === currentId ? { ...c, balance: v, updatedAt: Date.now() } : c)));
+    input.blur();
     renderDetail(getCard(currentId));
-    $("copyMsg").textContent = "Balance updated.";
+    toast("Balance updated");
   });
   $("deleteBtn").addEventListener("click", () => {
     const btn = $("deleteBtn");
     if (btn.dataset.armed !== "1") {
       btn.dataset.armed = "1";
-      btn.textContent = "Tap again to delete";
-      setTimeout(() => { btn.dataset.armed = ""; btn.textContent = "Delete"; }, 4000);
+      $("deleteLabel").textContent = "Tap again to delete";
+      setTimeout(() => { if (btn.dataset.armed === "1") { btn.dataset.armed = ""; $("deleteLabel").textContent = "Delete card"; } }, 4000);
       return;
     }
-    btn.dataset.armed = ""; btn.textContent = "Delete";
+    btn.dataset.armed = "";
     saveCards(loadCards().filter((c) => c.id !== currentId));
-    location.hash = "#/";
+    toast("Card deleted");
+    history.replaceState(null, "", "#/");
+    route();
   });
 
+  // ================= Full-screen barcode (for the cashier) =================
+  let wakeLock = null;
+  async function openFullscreen() {
+    const c = getCard(currentId); if (!c) return;
+    $("fsMerchant").textContent = c.merchant;
+    $("fsNumber").textContent = c.cardNumber || c.barcodeValue;
+    const kind = drawBarcode($("fsBarcode"), c);
+    if (!kind) return;
+    $("fullscreen").hidden = false;
+    document.body.classList.add("fs-open");
+    // Keep the screen awake while the cashier scans.
+    try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch {}
+  }
+  function closeFullscreen() {
+    if ($("fullscreen").hidden) return;
+    $("fullscreen").hidden = true;
+    document.body.classList.remove("fs-open");
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  }
+  $("dBarcodeBtn").addEventListener("click", openFullscreen);
+  $("bbShow").addEventListener("click", openFullscreen);
+  $("fsClose").addEventListener("click", closeFullscreen);
+  $("fullscreen").addEventListener("click", (e) => { if (e.target.id === "fullscreen") closeFullscreen(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFullscreen(); });
+
+  // ================= Desktop: QR to open on a phone =================
+  function drawDeskQr() {
+    if (!window.bwipjs || !matchMedia("(min-width: 900px)").matches || $("deskQr").childElementCount) return;
+    try { $("deskQr").innerHTML = bwipjs.toSVG({ bcid: "qrcode", text: location.origin + location.pathname, scale: 4, paddingwidth: 0, paddingheight: 0 }); } catch {}
+  }
+
   // ================= Start =================
-  window.addEventListener("load", () => {
-    // The barcode library loads after the page; redraw once it's ready.
-    if (!views.card.hidden && currentId) drawBarcode($("dBarcode"), getCard(currentId));
-    if (!views.edit.hidden) updatePreview();
-  });
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
   route();
+  drawDeskQr();
+  matchMedia("(min-width: 900px)").addEventListener("change", drawDeskQr);
 })();

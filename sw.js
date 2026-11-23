@@ -1,5 +1,5 @@
 // Offline support: cache the app shell so cards open at the till without signal.
-const CACHE = "giftpass-v1";
+const CACHE = "giftpass-v2";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest",
   "favicon.svg", "apple-touch-icon.png", "icon-192.png", "icon-512.png",
