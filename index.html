@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f3ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)">
+  <title>GiftPass · Your gift cards, on your phone</title>
+  <meta name="description" content="Scan your gift cards once and keep them on your phone. Show the barcode at the till or copy the number at checkout. Free, private, works offline.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GiftPass">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="grain"></span></div>
+
+  <nav class="nav">
+    <a href="#/" class="brand"><img src="favicon.svg" alt="" width="30" height="30" class="brand-logo">GiftPass</a>
+    <a href="#/add" class="btn btn-accent btn-sm" id="navAdd">+ Add card</a>
+  </nav>
+
+  <!-- ============ Home: card list ============ -->
+  <section id="viewHome" class="view">
+    <header class="hero">
+      <p class="eyebrow">Free · Private · Works offline</p>
+      <h1>Every gift card,<br><span class="hl">right on your phone.</span></h1>
+      <p class="lede">Scan a gift card once and leave the plastic at home. Show the barcode at the till, or copy the number and PIN at checkout. Your cards stay on this device and are never uploaded.</p>
+    </header>
+
+    <div id="installTip" class="tip" hidden>
+      <strong>Add GiftPass to your Home Screen</strong>
+      <span>In Safari, tap <b>Share</b> <svg class="ico-share" viewBox="0 0 24 24" aria-label="Share icon"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> then <b>Add to Home Screen</b>. It opens like an app and works without signal.</span>
+      <button type="button" class="tip-close" id="installTipClose" aria-label="Dismiss">×</button>
+    </div>
+
+    <main class="wrap">
+      <div class="list-head">
+        <h2>Your cards</h2>
+        <span id="totalBalance" class="total"></span>
+      </div>
+      <div id="cardGrid" class="card-grid"></div>
+      <div id="emptyState" class="empty card" hidden>
+        <img src="favicon.svg" alt="" width="64" height="64">
+        <h3>No gift cards yet</h3>
+        <p>Scan the barcode on the back of a gift card to add it. It takes about ten seconds.</p>
+        <a href="#/add" class="btn btn-accent">Add your first card</a>
+      </div>
+
+      <details class="card backup">
+        <summary>Backup &amp; restore</summary>
+        <p class="hint">Cards are saved only in this browser. If you delete the app or clear Safari data, they're gone. Keep a backup file somewhere safe, and use it to move your cards to a new phone.</p>
+        <div class="row">
+          <button type="button" class="btn btn-ghost" id="exportBtn">Download backup</button>
+          <label class="btn btn-ghost">Restore from file<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+        </div>
+        <p id="backupMsg" class="hint" aria-live="polite"></p>
+      </details>
+    </main>
+  </section>
+
+  <!-- ============ Add / edit ============ -->
+  <section id="viewEdit" class="view" hidden>
+    <header class="page-head wrap">
+      <a href="#/" class="back">← Cards</a>
+      <h1 id="editTitle">Add a gift card</h1>
+    </header>
+    <main class="layout">
+      <div class="steps">
+        <section class="card" id="scanCard">
+          <div class="step-head"><span class="step-num">01</span><div><h2>Scan the barcode</h2><p>Most cards have one on the back.</p></div></div>
+          <div class="scanner">
+            <video id="video" playsinline muted></video>
+            <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+            <div id="scanHint" class="scan-hint">Camera is off</div>
+          </div>
+          <div class="row">
+            <button type="button" id="scanBtn" class="btn btn-accent">Start camera</button>
+            <label class="btn btn-ghost">Use a photo<input id="photo" type="file" accept="image/*" hidden></label>
+          </div>
+          <p id="scanResult" class="hint" aria-live="polite">No barcode? Skip this step and type the card number below.</p>
+        </section>
+
+        <form id="cardForm" class="card" novalidate>
+          <div class="step-head"><span class="step-num">02</span><div><h2>Card details</h2><p>Check what the scanner found.</p></div></div>
+          <label class="field"><span>Store or brand</span><input name="merchant" required maxlength="60" placeholder="e.g. Target" autocomplete="off"></label>
+          <label class="field"><span>Card number</span><input name="cardNumber" inputmode="numeric" maxlength="64" placeholder="Printed on the card" autocomplete="off"></label>
+          <div class="grid2">
+            <label class="field"><span>PIN / security code</span><input name="pin" maxlength="32" placeholder="Under the scratch-off" autocomplete="off"></label>
+            <label class="field"><span>Balance</span><input name="balance" inputmode="decimal" placeholder="25.00"></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>Currency</span><select name="currency"><option>USD</option><option>CAD</option><option>GBP</option><option>EUR</option><option>AUD</option><option>INR</option></select></label>
+            <label class="field"><span>Expires <em>optional</em></span><input name="expires" type="date"></label>
+          </div>
+          <details class="more">
+            <summary>More options</summary>
+            <label class="field"><span>Barcode data</span><input name="barcodeValue" maxlength="2000" placeholder="Filled in by the scanner"></label>
+            <label class="field"><span>Barcode type</span><select name="barcodeFormat">
+              <option value="">Not scanned (use card number)</option>
+              <option>CODE_128</option><option>PDF_417</option><option>QR_CODE</option><option>AZTEC</option>
+              <option>CODE_39</option><option>CODE_93</option><option>EAN_13</option><option>EAN_8</option>
+              <option>UPC_A</option><option>UPC_E</option><option>ITF</option><option>CODABAR</option><option>DATA_MATRIX</option>
+            </select></label>
+            <label class="field"><span>Website to shop / redeem online</span><input name="redeemUrl" inputmode="url" placeholder="target.com"></label>
+            <label class="field"><span>Balance-check page</span><input name="balanceUrl" inputmode="url" placeholder="target.com/giftcards/balance"></label>
+            <label class="field"><span>Notes</span><textarea name="notes" rows="2" maxlength="500"></textarea></label>
+            <label class="field color"><span>Card colour</span><input name="color" type="color" value="#3b4bdb"></label>
+          </details>
+        </form>
+      </div>
+
+      <aside class="side">
+        <div class="side-inner">
+          <div class="step-head"><span class="step-num">03</span><div><h2>Save it</h2><p>This is how the card will look.</p></div></div>
+          <div id="preview" class="pass" aria-label="Card preview">
+            <div class="pass-shine" aria-hidden="true"></div>
+            <div class="pass-top"><span class="pass-logo"></span><span id="pvMerchant">Store</span></div>
+            <div class="pass-primary"><small id="pvPrimaryLabel">GIFT CARD</small><strong id="pvPrimary">Store</strong></div>
+            <div class="pass-secondary"><div><small>CARD</small><span id="pvNumber">—</span></div><div id="pvPinWrap" hidden><small>PIN</small><span>Saved</span></div></div>
+            <div class="pass-barcode"><div id="pvBarcode" class="barcode-real"></div><span id="pvAlt"></span></div>
+          </div>
+          <p id="formError" class="error" role="alert" hidden></p>
+          <button type="submit" form="cardForm" id="saveBtn" class="btn btn-wallet">Save card</button>
+          <ul class="perks">
+            <li><b>In store</b> Show the barcode for the cashier to scan.</li>
+            <li><b>Online</b> Copy the number and PIN with one tap.</li>
+            <li><b>Private</b> Saved only on this device, never uploaded.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </section>
+
+  <!-- ============ Card detail (show at the till) ============ -->
+  <section id="viewCard" class="view" hidden>
+    <header class="page-head wrap">
+      <a href="#/" class="back">← Cards</a>
+    </header>
+    <main class="wrap detail">
+      <div id="detailPass" class="pass pass-lg">
+        <div class="pass-shine" aria-hidden="true"></div>
+        <div class="pass-top"><span class="pass-logo"></span><span id="dMerchant"></span></div>
+        <div class="pass-primary"><small id="dPrimaryLabel">BALANCE</small><strong id="dPrimary"></strong></div>
+        <div class="pass-secondary"><div id="dExpWrap"><small>EXPIRES</small><span id="dExpires"></span></div></div>
+        <div class="pass-barcode"><div id="dBarcode" class="barcode-real big"></div><span id="dAlt" class="alt-big"></span></div>
+      </div>
+      <p class="hint center">Turn your screen brightness up before the cashier scans.</p>
+
+      <div class="card actions">
+        <div class="copy-row" id="numRow">
+          <div><small>Card number</small><strong id="dNumber" class="mono"></strong></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-copy="number">Copy</button>
+        </div>
+        <div class="copy-row" id="pinRow">
+          <div><small>PIN</small><strong id="dPin" class="mono">••••</strong></div>
+          <div class="row tight">
+            <button type="button" class="btn btn-ghost btn-sm" id="revealPin">Show</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-copy="pin">Copy</button>
+          </div>
+        </div>
+        <div class="row" id="linkRow">
+          <a id="dRedeem" class="btn btn-ghost" target="_blank" rel="noopener">Shop online ↗</a>
+          <a id="dBalanceLink" class="btn btn-ghost" target="_blank" rel="noopener">Check balance ↗</a>
+        </div>
+        <form id="balanceForm" class="balance-form">
+          <label class="field"><span>Update balance after spending</span>
+            <div class="inline"><input name="balance" inputmode="decimal" placeholder="0.00"><button class="btn btn-accent btn-sm" type="submit">Update</button></div>
+          </label>
+        </form>
+        <p id="dNotes" class="note"></p>
+        <div class="row">
+          <a id="dEdit" class="btn btn-ghost">Edit</a>
+          <button type="button" class="btn btn-danger" id="deleteBtn">Delete</button>
+        </div>
+        <p id="copyMsg" class="hint center" aria-live="polite"></p>
+      </div>
+    </main>
+  </section>
+
+  <footer class="foot">GiftPass is free and open source · <a href="https://github.com/awnsh/giftpass">GitHub</a> · Not affiliated with Apple or any retailer. Balances are what you enter and don't update on their own.</footer>
+
+  <script src="vendor/zxing.min.js" defer></script>
+  <script src="vendor/bwip-js.min.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

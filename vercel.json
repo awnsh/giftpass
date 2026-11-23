@@ -1,7 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "mkdir -p public/vendor/zxing && cp node_modules/@zxing/library/umd/index.min.js public/vendor/zxing/index.min.js",
-  "outputDirectory": "public",
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
-  "headers": [{ "source": "/api/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }]
-}

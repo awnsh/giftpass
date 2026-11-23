@@ -1,7 +1,2 @@
-node_modules/
-.env
-certs/
 .claude/
-*.pkpass
-public/vendor/
-.vercel
+node_modules/

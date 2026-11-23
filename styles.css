@@ -186,3 +186,75 @@ select option { background: var(--bg); color: var(--ink); }
   .banner { margin-inline: 16px; }
   .nav-pill { display: none; }
 }
+
+/* ================= App screens ================= */
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+.nav .btn { flex: none; }
+.btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
+.btn-danger { background: transparent; color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); }
+.btn-danger:hover { background: color-mix(in srgb, var(--error) 10%, transparent); }
+.row.tight { margin-top: 0; gap: 8px; }
+.center { text-align: center; }
+.foot a { color: inherit; }
+
+.tip { position: relative; max-width: 1080px; margin: 0 20px 8px; padding: 14px 44px 14px 16px; border-radius: 16px;
+  background: var(--accent-soft); border: 1px solid var(--field-border); font-size: 14px; display: grid; gap: 4px; }
+@media (min-width: 1120px) { .tip { margin-inline: auto; } }
+.ico-share { width: 16px; height: 16px; vertical-align: -3px; }
+.tip-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font-size: 22px; cursor: pointer; }
+
+.list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 8px 0 14px; }
+.list-head h2 { font-size: 24px; }
+.total { font-weight: 700; color: var(--ink-soft); font-size: 14px; }
+
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.mini { position: relative; overflow: hidden; display: grid; gap: 2px; aspect-ratio: 1.586; padding: 16px 18px; border-radius: 18px;
+  text-decoration: none; box-shadow: 0 0 0 1px rgba(0,0,0,.06) inset; transition: transform .15s ease; }
+.mini:hover { transform: translateY(-2px); }
+.mini:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.mini-top { position: relative; display: flex; align-items: center; gap: 8px; font: 700 15px var(--font-display); }
+.mini-bal { position: relative; align-self: end; font: 500 28px/1.1 var(--font-display); letter-spacing: -0.02em; }
+.mini-num { position: relative; font-size: 13px; font-weight: 600; opacity: .8; }
+
+.empty { text-align: center; padding: 40px 24px; margin-bottom: 24px; }
+.empty img { border-radius: 16px; }
+.empty h3 { font: 700 22px var(--font-display); margin: 14px 0 6px; }
+.empty p { color: var(--ink-soft); max-width: 40ch; margin: 0 auto 18px; }
+.empty .btn { display: inline-flex; flex: none; }
+
+.backup { margin-bottom: 40px; }
+.backup summary { cursor: pointer; font-weight: 700; }
+.backup .hint { margin-top: 10px; }
+
+.page-head { padding-top: 24px; padding-bottom: 8px; }
+.page-head h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; margin-top: 6px; }
+.back { color: var(--ink-soft); text-decoration: none; font-weight: 700; font-size: 14px; }
+.back:hover { color: var(--ink); }
+
+/* Real barcodes are drawn on white with a quiet zone so scanners can read them */
+.barcode-real { margin: 0 auto 6px; max-width: 280px; padding: 12px; background: #fff; border-radius: 10px; color: #111;
+  display: grid; place-items: center; min-height: 64px; }
+.barcode-real svg { display: block; width: 100%; height: auto; max-height: 120px; }
+.barcode-real[data-kind="2d"] svg { max-height: 180px; width: auto; max-width: 100%; }
+.barcode-real.big { max-width: 420px; padding: 18px; }
+.barcode-real.big[data-kind="1d"] svg { max-height: 150px; }
+.barcode-real.big[data-kind="2d"] svg { max-height: 240px; }
+.no-barcode { font-size: 13px; font-weight: 600; color: #444; padding: 8px; }
+
+.detail { max-width: 560px; padding-bottom: 40px; }
+.pass-lg { padding: 20px 22px 22px; border-radius: 22px; }
+.pass-lg .pass-primary strong { font-size: 40px; }
+.alt-big { font: 700 18px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .06em; }
+.actions { display: grid; gap: 14px; margin-top: 8px; }
+.copy-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.copy-row small { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.copy-row .btn { flex: none; }
+.mono { font: 700 17px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .04em; overflow-wrap: anywhere; }
+.actions .row { margin-top: 0; }
+.balance-form .field { margin: 0; }
+.inline { display: flex; gap: 8px; }
+.inline .btn { flex: none; }
+.actions .note:empty { display: none; }
+.has-cards .hero { display: none; }
+.has-cards .wrap { padding-top: 20px; }
+.actions .row .btn { padding: 0 10px; white-space: nowrap; font-size: 15px; }
