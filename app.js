@@ -77,17 +77,24 @@
   }
 
   // ================= Routing + app chrome =================
-  const views = { home: $("viewHome"), edit: $("viewEdit"), card: $("viewCard") };
+  const views = { welcome: $("viewWelcome"), home: $("viewHome"), edit: $("viewEdit"), card: $("viewCard") };
+  const isStandalone = () => window.navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isPhone = matchMedia("(pointer: coarse)").matches || /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+  const SKIP_KEY = "giftpass.skipWelcome";
+  const skippedWelcome = () => { try { return sessionStorage.getItem(SKIP_KEY) === "1"; } catch { return false; } };
   let editingId = null;
 
-  function chrome(name, title) {
+  function chrome(name, title, showBack) {
     for (const [k, v] of Object.entries(views)) v.hidden = k !== name;
-    const home = name === "home";
-    $("brand").hidden = !home;
-    $("backBtn").hidden = home;
-    $("barTitle").hidden = home;
+    const top = name === "home" || (name === "welcome" && !showBack);
+    $("brand").hidden = !top;
+    $("backBtn").hidden = top;
+    $("barTitle").hidden = top;
     $("barTitle").textContent = title || "";
     $("bbAdd").hidden = name !== "home";
+    $("bbContinue").hidden = name !== "welcome";
+    $("bbHow").hidden = name !== "welcome";
     $("bbSave").hidden = name !== "edit";
     $("bbShow").hidden = name !== "card";
     document.body.dataset.view = name;
@@ -98,6 +105,8 @@
     closeFullscreen();
     const [, page, rawId] = location.hash.split("/");
     const id = rawId ? decodeURIComponent(rawId) : "";
+    if (page === "install") { renderWelcome(); chrome("welcome", "Add to Home Screen", true); return; }
+    if ((!page || page === "") && !isStandalone() && !skippedWelcome()) { renderWelcome(); chrome("welcome"); return; }
     if (page === "add") { openEditor(null); chrome("edit", "Add a card"); }
     else if (page === "edit" && getCard(id)) { openEditor(getCard(id)); chrome("edit", "Edit card"); }
     else if (page === "card" && getCard(id)) { renderDetail(getCard(id)); chrome("card", getCard(id).merchant); }
@@ -129,18 +138,53 @@
     $("totalBalance").textContent = parts.length ? parts.join(" + ") : "";
   }
 
-  // Install tip: iPhone/iPad Safari, not already installed, not dismissed.
-  (function installTip() {
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const standalone = window.navigator.standalone || matchMedia("(display-mode: standalone)").matches;
-    let dismissed = false;
-    try { dismissed = localStorage.getItem("giftpass.tipDismissed") === "1"; } catch {}
-    if (ios && !standalone && !dismissed) $("installTip").hidden = false;
-    $("installTipClose").addEventListener("click", () => {
-      $("installTip").hidden = true;
-      try { localStorage.setItem("giftpass.tipDismissed", "1"); } catch {}
-    });
-  })();
+  // On the card list in a phone browser, keep a small link to the install steps.
+  $("installTip").hidden = !(isPhone && !isStandalone());
+
+  // ================= Welcome / install steps =================
+  function renderWelcome() {
+    const n = loadCards().length;
+    $("bbContinue").textContent = n ? `My cards (${n})` : "Use in browser";
+  }
+  function selectTab(android) {
+    $("tabIos").setAttribute("aria-selected", String(!android));
+    $("tabAndroid").setAttribute("aria-selected", String(android));
+    $("stepsIos").hidden = android;
+    $("stepsAndroid").hidden = !android;
+  }
+  selectTab(isAndroid);
+  $("tabIos").addEventListener("click", () => selectTab(false));
+  $("tabAndroid").addEventListener("click", () => selectTab(true));
+  $("bbContinue").addEventListener("click", () => {
+    try { sessionStorage.setItem(SKIP_KEY, "1"); } catch {}
+    location.replace("#/");
+    route();
+  });
+
+  // Android Chrome / Edge: offer a real one-tap install button when the browser allows it.
+  let installEvent = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installEvent = e;
+    $("installNow").hidden = false;
+  });
+  // Bottom-bar button: install directly where the browser allows it, otherwise jump to the illustrated steps.
+  $("bbHow").addEventListener("click", () => {
+    if (installEvent) return $("installNow").click();
+    const panel = document.querySelector(".install");
+    const y = panel.getBoundingClientRect().top + window.scrollY - 64;
+    window.scrollTo({ top: y, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+  $("installNow").addEventListener("click", async () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    const choice = await installEvent.userChoice.catch(() => null);
+    if (choice && choice.outcome === "accepted") { $("installNow").hidden = true; installEvent = null; }
+  });
+  window.addEventListener("appinstalled", () => {
+    $("installNow").hidden = true;
+    toast("GiftPass installed. Open it from your Home Screen.");
+  });
 
   // Backup / restore
   $("exportBtn").addEventListener("click", () => {

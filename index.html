@@ -43,6 +43,162 @@
       <span class="bar-spacer"></span>
     </header>
 
+    <!-- ============ Welcome (opened in the browser, not installed) ============ -->
+    <section id="viewWelcome" class="view welcome" hidden>
+      <div class="w-hero">
+        <img src="icon-192.png" alt="" width="84" height="84" class="w-icon">
+        <h2 class="w-title">Your gift cards,<br><span class="hl">in your pocket.</span></h2>
+        <p class="lede">Scan a gift card once. Show the barcode at the till or copy the number at checkout. Free, private, works offline.</p>
+      </div>
+
+      <!-- App preview -->
+      <div class="w-phone" aria-hidden="true">
+        <div class="w-phone-screen">
+          <div class="w-phone-bar"><span></span>Your cards<b>$82.18</b></div>
+          <div class="w-stack">
+            <div class="w-card" style="background:#f2e9d8;color:#111827"><span class="pass-logo"></span>Bookshop<b>$25.00</b></div>
+            <div class="w-card" style="background:#006241"><span class="pass-logo"></span>Coffee<b>$15.00</b></div>
+            <div class="w-card w-card-last" style="background:#c8102e"><span class="pass-logo"></span>Superstore<b>$42.18</b>
+              <i class="w-barcode"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="w-points">
+        <li><span aria-hidden="true">📷</span><div><b>Scan in seconds</b>Point the camera at the barcode on the back.</div></li>
+        <li><span aria-hidden="true">🛒</span><div><b>Use it anywhere</b>Show the barcode in store, or copy the number online.</div></li>
+        <li><span aria-hidden="true">🔒</span><div><b>Stays on your phone</b>No account. Nothing is uploaded.</div></li>
+      </ul>
+
+      <section class="panel install" aria-labelledby="installHeading">
+        <h3 id="installHeading" class="section-title">Add GiftPass to your Home Screen</h3>
+        <p class="hint">It opens like a normal app, full screen, and works without signal at the till.</p>
+
+        <div class="seg" role="tablist" aria-label="Phone type">
+          <button type="button" role="tab" id="tabIos" aria-selected="true" aria-controls="stepsIos">iPhone</button>
+          <button type="button" role="tab" id="tabAndroid" aria-selected="false" aria-controls="stepsAndroid">Android</button>
+        </div>
+
+        <button type="button" id="installNow" class="btn btn-accent install-now" hidden>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Install GiftPass
+        </button>
+
+        <ol class="steps-list" id="stepsIos" role="tabpanel" aria-labelledby="tabIos">
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Safari bottom toolbar with the Share button highlighted">
+              <rect x="30" y="-40" width="200" height="230" rx="30" class="i-frame"/>
+              <rect x="38" y="-32" width="184" height="210" rx="23" class="i-screen"/>
+              <rect x="54" y="0" width="110" height="10" rx="5" class="i-line"/>
+              <rect x="54" y="18" width="150" height="8" rx="4" class="i-line soft"/>
+              <rect x="54" y="32" width="130" height="8" rx="4" class="i-line soft"/>
+              <rect x="38" y="104" width="184" height="74" class="i-bar"/>
+              <rect x="56" y="114" width="148" height="24" rx="12" class="i-pill"/>
+              <text x="130" y="130" class="i-text" text-anchor="middle">awnsh.github.io</text>
+              <path d="M66 154l-6 6 6 6" class="i-stroke"/>
+              <path d="M94 154l6 6-6 6" class="i-stroke soft"/>
+              <circle cx="130" cy="160" r="17" class="i-hi"/>
+              <g transform="translate(130 161)" class="i-ink-stroke"><path d="M0 -9v11M-5 -4.5 0 -9l5 4.5" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M-7 -2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke-width="2.2" stroke-linecap="round"/></g>
+              <rect x="152" y="152" width="14" height="16" rx="2" class="i-stroke"/>
+              <rect x="180" y="153" width="14" height="14" rx="3" class="i-stroke"/>
+              <circle cx="130" cy="160" r="25" class="i-tap"/>
+            </svg>
+            <div><b>Tap the Share button</b><span>At the bottom of Safari. On iOS 26, tap <b>•••</b> first, then <b>Share</b>.</span></div>
+          </li>
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Share menu with Add to Home Screen highlighted">
+              <rect x="30" y="20" width="200" height="190" rx="30" class="i-frame"/>
+              <rect x="38" y="28" width="184" height="170" rx="23" class="i-screen"/>
+              <rect x="118" y="36" width="24" height="4" rx="2" class="i-line"/>
+              <rect x="50" y="50" width="160" height="30" rx="9" class="i-pill"/><text x="64" y="69" class="i-text">Copy</text>
+              <rect x="50" y="86" width="160" height="30" rx="9" class="i-pill"/><text x="64" y="105" class="i-text">Add to Favourites</text>
+              <rect x="44" y="122" width="172" height="36" rx="11" class="i-hi"/>
+              <text x="62" y="145" class="i-text strong">Add to Home Screen</text>
+              <rect x="186" y="131" width="18" height="18" rx="5" class="i-ink-box"/>
+              <path d="M195 135v10M190 140h10" class="i-ink-line"/>
+              <rect x="50" y="164" width="160" height="30" rx="9" class="i-pill"/><text x="64" y="183" class="i-text">Find on Page</text>
+              <circle cx="120" cy="140" r="22" class="i-tap"/>
+            </svg>
+            <div><b>Choose “Add to Home Screen”</b><span>Scroll down the menu to find it. On iOS 26 it may be under <b>View More</b>.</span></div>
+          </li>
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Add to Home Screen sheet with the Add button highlighted">
+              <rect x="30" y="20" width="200" height="190" rx="30" class="i-frame"/>
+              <rect x="38" y="28" width="184" height="170" rx="23" class="i-screen"/>
+              <text x="56" y="57" class="i-text soft">Cancel</text>
+              <circle cx="196" cy="52" r="17" class="i-hi"/>
+              <text x="196" y="57" class="i-text strong" text-anchor="middle">Add</text>
+              <circle cx="196" cy="52" r="24" class="i-tap"/>
+              <rect x="50" y="78" width="160" height="58" rx="12" class="i-pill"/>
+              <image href="icon-192.png" x="60" y="86" width="42" height="42"/>
+              <text x="112" y="103" class="i-text strong">GiftPass</text>
+              <text x="112" y="120" class="i-text soft small">awnsh.github.io</text>
+              <rect x="50" y="146" width="160" height="30" rx="9" class="i-pill"/>
+              <text x="62" y="165" class="i-text small">Open as Web App</text>
+              <rect x="178" y="153" width="24" height="15" rx="7.5" class="i-toggle"/>
+              <circle cx="194" cy="160.5" r="5.5" fill="#fff"/>
+            </svg>
+            <div><b>Tap “Add”</b><span>Leave <b>Open as Web App</b> on if you see it. GiftPass is now on your Home Screen.</span></div>
+          </li>
+        </ol>
+
+        <ol class="steps-list" id="stepsAndroid" role="tabpanel" aria-labelledby="tabAndroid" hidden>
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Chrome top bar with the three-dot menu highlighted">
+              <rect x="30" y="10" width="200" height="220" rx="30" class="i-frame"/>
+              <rect x="38" y="18" width="184" height="210" rx="23" class="i-screen"/>
+              <rect x="38" y="18" width="184" height="52" rx="23" class="i-bar"/>
+              <rect x="50" y="32" width="130" height="26" rx="13" class="i-pill"/>
+              <text x="64" y="49" class="i-text">awnsh.github.io</text>
+              <circle cx="200" cy="45" r="16" class="i-hi"/>
+              <g class="i-ink-dot"><circle cx="200" cy="38" r="2.4"/><circle cx="200" cy="45" r="2.4"/><circle cx="200" cy="52" r="2.4"/></g>
+              <circle cx="200" cy="45" r="23" class="i-tap"/>
+              <rect x="54" y="90" width="110" height="10" rx="5" class="i-line"/>
+              <rect x="54" y="110" width="150" height="8" rx="4" class="i-line soft"/>
+              <rect x="54" y="124" width="130" height="8" rx="4" class="i-line soft"/>
+              <rect x="54" y="138" width="140" height="8" rx="4" class="i-line soft"/>
+            </svg>
+            <div><b>Tap the ⋮ menu</b><span>In the top-right corner of Chrome.</span></div>
+          </li>
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Chrome menu with Add to home screen highlighted">
+              <rect x="30" y="10" width="200" height="220" rx="30" class="i-frame"/>
+              <rect x="38" y="18" width="184" height="210" rx="23" class="i-screen"/>
+              <rect x="70" y="28" width="144" height="150" rx="12" class="i-pill solid"/>
+              <text x="84" y="52" class="i-text">New tab</text>
+              <text x="84" y="76" class="i-text">Bookmarks</text>
+              <text x="84" y="100" class="i-text">Share…</text>
+              <rect x="74" y="110" width="136" height="32" rx="9" class="i-hi"/>
+              <text x="84" y="131" class="i-text strong">Add to home screen</text>
+              <text x="84" y="162" class="i-text">Settings</text>
+              <circle cx="140" cy="126" r="22" class="i-tap"/>
+            </svg>
+            <div><b>Tap “Add to home screen”</b><span>It may say <b>Install app</b> instead.</span></div>
+          </li>
+          <li class="step">
+            <svg class="illo" viewBox="0 0 260 180" role="img" aria-label="Install dialog with the Install button highlighted">
+              <rect x="30" y="10" width="200" height="220" rx="30" class="i-frame"/>
+              <rect x="38" y="18" width="184" height="210" rx="23" class="i-screen dim"/>
+              <rect x="50" y="50" width="160" height="112" rx="16" class="i-pill solid"/>
+              <text x="64" y="76" class="i-text strong">Install app</text>
+              <image href="icon-192.png" x="64" y="88" width="30" height="30"/>
+              <text x="102" y="108" class="i-text">GiftPass</text>
+              <text x="100" y="148" class="i-text soft">Cancel</text>
+              <rect x="146" y="132" width="54" height="24" rx="12" class="i-hi"/>
+              <text x="173" y="148" class="i-text strong" text-anchor="middle">Install</text>
+              <circle cx="173" cy="144" r="22" class="i-tap"/>
+            </svg>
+            <div><b>Tap “Install”</b><span>GiftPass is added to your home screen and app drawer.</span></div>
+          </li>
+        </ol>
+
+        <div class="w-done">
+          <img src="icon-192.png" alt="" width="44" height="44">
+          <p><b>Then open GiftPass from your Home Screen</b> and add your first card. Cards added in the browser stay in the browser, so add the app first.</p>
+        </div>
+      </section>
+    </section>
+
     <!-- ============ Home: card list ============ -->
     <section id="viewHome" class="view">
       <header class="hero">
@@ -51,11 +207,11 @@
         <p class="lede">Scan a gift card once and leave the plastic at home. Your cards stay on this phone and are never uploaded.</p>
       </header>
 
-      <div id="installTip" class="tip" hidden>
-        <strong>Add GiftPass to your Home Screen</strong>
-        <span>Tap <b>Share</b> <svg class="ico-share" viewBox="0 0 24 24" aria-label="Share icon"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> then <b>Add to Home Screen</b>. It opens like an app and works without signal.</span>
-        <button type="button" class="tip-close" id="installTipClose" aria-label="Dismiss">×</button>
-      </div>
+      <a href="#/install" id="installTip" class="tip-row" hidden>
+        <img src="icon-192.png" alt="" width="36" height="36">
+        <span><b>Add GiftPass to your Home Screen</b><small>See how. It only takes 3 taps.</small></span>
+        <span class="chev">›</span>
+      </a>
 
       <div class="list-head">
         <h2>Your cards</h2>
@@ -193,6 +349,8 @@
         Add a card
       </a>
       <button type="submit" form="cardForm" class="btn btn-primary" id="bbSave" hidden>Save card</button>
+      <button type="button" class="btn btn-ghost bb-secondary" id="bbContinue" hidden>Use in browser</button>
+      <button type="button" class="btn btn-primary" id="bbHow" hidden>Add to Home Screen</button>
       <button type="button" class="btn btn-primary" id="bbShow" hidden>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M16 6v12M20 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         Show barcode
